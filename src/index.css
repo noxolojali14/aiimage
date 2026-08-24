@@ -1,0 +1,49 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-brand-bg text-gray-800 font-sans antialiased;
+  }
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #F9A8D4 transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  *::-webkit-scrollbar-thumb {
+    background-color: #F9A8D4;
+    border-radius: 9999px;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-purple to-brand-pink px-5 py-3 text-sm font-semibold text-white shadow-md transition-all hover:shadow-lg hover:brightness-105 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-brand-lightPurple bg-white px-5 py-3 text-sm font-semibold text-brand-purple transition-all hover:bg-brand-lightPurple/40 active:scale-[0.98] disabled:opacity-60;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-gray-600 transition-all hover:bg-brand-lightPurple/30 hover:text-brand-purple;
+  }
+  .card {
+    @apply rounded-2xl border border-brand-lightPurple/60 bg-white shadow-sm transition-all;
+  }
+  .input-field {
+    @apply w-full rounded-xl border border-brand-lightPurple bg-white px-4 py-3 text-sm text-gray-800 placeholder:text-gray-400 transition-all focus:border-brand-purple focus:outline-none focus:ring-2 focus:ring-brand-purple/20;
+  }
+  .label-text {
+    @apply mb-1.5 block text-sm font-semibold text-gray-700;
+  }
+  .shimmer-bg {
+    background: linear-gradient(90deg, #FCE7F3 0%, #F9A8D4 50%, #FCE7F3 100%);
+    background-size: 200% 100%;
+    @apply animate-shimmer;
+  }
+}

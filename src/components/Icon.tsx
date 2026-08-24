@@ -1,0 +1,108 @@
+import {
+  FileText,
+  Mail,
+  Share2,
+  Megaphone,
+  Package,
+  Code2,
+  Image as ImageIcon,
+  LayoutDashboard,
+  Sparkles,
+  BookMarked,
+  FolderOpen,
+  LogOut,
+  Menu,
+  X,
+  Copy,
+  Check,
+  Trash2,
+  RefreshCw,
+  Download,
+  Save,
+  Wand2,
+  Loader2,
+  Eye,
+  Plus,
+  Lightbulb,
+  TrendingUp,
+  Type,
+  Palette,
+  ChevronRight,
+} from 'lucide-react';
+// Re-export under a non-conflicting name for consumers.
+export { ImageIcon };
+import type { LucideIcon } from 'lucide-react';
+
+const ICONS: Record<string, LucideIcon> = {
+  FileText,
+  Mail,
+  Share2,
+  Megaphone,
+  Package,
+  Code2,
+  Image: ImageIcon,
+  LayoutDashboard,
+  Sparkles,
+  BookMarked,
+  FolderOpen,
+  LogOut,
+  Menu,
+  X,
+  Copy,
+  Check,
+  Trash2,
+  RefreshCw,
+  Download,
+  Save,
+  Wand2,
+  Loader2,
+  Eye,
+  Plus,
+  Lightbulb,
+  TrendingUp,
+  Type,
+  Palette,
+  ChevronRight,
+};
+
+export function Icon({
+  name,
+  className,
+}: {
+  name: string;
+  className?: string;
+}) {
+  const Cmp = ICONS[name] ?? Sparkles;
+  return <Cmp className={className} />;
+}
+
+export {
+  FileText,
+  Mail,
+  Share2,
+  Megaphone,
+  Package,
+  Code2,
+  LayoutDashboard,
+  Sparkles,
+  BookMarked,
+  FolderOpen,
+  LogOut,
+  Menu,
+  X,
+  Copy,
+  Check,
+  Trash2,
+  RefreshCw,
+  Download,
+  Save,
+  Wand2,
+  Loader2,
+  Eye,
+  Plus,
+  Lightbulb,
+  TrendingUp,
+  Type,
+  Palette,
+  ChevronRight,
+};
