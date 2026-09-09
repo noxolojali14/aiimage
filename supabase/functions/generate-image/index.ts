@@ -36,14 +36,15 @@ Deno.serve(async (req: Request) => {
     const apiKey = Deno.env.get("OPENAI_API_KEY");
 
     // Demo mode: no image-generation API key configured.
+    // Use Pollinations AI to generate a real image from the prompt.
     if (!apiKey) {
+      const enhanced = `${prompt}, ${body.style ?? ""} ${body.mood ?? ""} mood, high detail, professional`;
+      const encoded = encodeURIComponent(enhanced);
       const { width, height } = aspectToDimensions(aspectRatio);
-      const seed = encodeURIComponent(
-        prompt.trim().split(" ").slice(0, 3).join("-") + "-" + Math.floor(Math.random() * 100000),
-      );
+      const seed = Math.floor(Math.random() * 1000000);
       return new Response(
         JSON.stringify({
-          url: `https://picsum.photos/seed/${seed}/${width}/${height}`,
+          url: `https://image.pollinations.ai/prompt/${encoded}?width=${width}&height=${height}&seed=${seed}&nologo=true&model=flux`,
           isDemo: true,
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } },

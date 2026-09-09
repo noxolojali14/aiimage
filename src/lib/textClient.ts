@@ -21,34 +21,32 @@ export async function generateAIText({
   systemPrompt,
   language,
 }: GenerateTextParams): Promise<{ text: string; isDemo: boolean }> {
-  const userPrompt = language
-    ? `Programming language: ${language}\n\nTask: ${prompt}`
-    : prompt;
+  // Build a combined instruction: system prompt + user request.
+  const instruction = language
+    ? `${systemPrompt}\n\nProgramming language: ${language}\nTask: ${prompt}`
+    : `${systemPrompt}\n\n${prompt}`;
 
-  const messages = [
-    { role: 'system', content: systemPrompt },
-    { role: 'user', content: userPrompt },
-  ];
+  const url = `https://text.pollinations.ai/${encodeURIComponent(instruction)}`;
 
   try {
-    const res = await fetch('https://text.pollinations.ai/openai', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'openai',
-        messages,
-        temperature: 0.7,
-      }),
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000);
+
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: { Accept: 'text/plain' },
+      signal: controller.signal,
     });
+
+    clearTimeout(timeout);
 
     if (!res.ok) {
       throw new Error(`Text API returned ${res.status}`);
     }
 
-    const data = await res.json();
-    const text: string | undefined = data?.choices?.[0]?.message?.content;
+    const text = await res.text();
 
-    if (text && text.trim().length > 0) {
+    if (text && text.trim().length > 20) {
       return { text: text.trim(), isDemo: false };
     }
 
