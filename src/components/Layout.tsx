@@ -23,7 +23,7 @@ const NAV: NavItem[] = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'generator', label: 'Generator', icon: Wand2 },
   { id: 'library', label: 'Prompt Library', icon: BookMarked },
-  { id: 'content', label: 'My Content', icon: FolderOpen },
+  { id: 'content', label: 'History', icon: FolderOpen },
 ];
 
 export default function Layout({

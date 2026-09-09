@@ -153,6 +153,20 @@ function TextCodeGenerator({
     const out = generateDemoContent(type, prompt, isCode ? language : undefined);
     setResult(out);
     setLoading(false);
+    // Auto-save to history.
+    try {
+      await saveContent({
+        type,
+        title: prompt.slice(0, 60) || (isCode ? language : type),
+        prompt: builtPrompt,
+        result: out,
+        language: isCode ? language : null,
+      });
+      setSaved(true);
+      onSaved();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to save to history.');
+    }
   };
 
   const handleCopy = async () => {
@@ -274,10 +288,10 @@ function TextCodeGenerator({
                   {copied ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
                   {copied ? 'Copied' : 'Copy'}
                 </button>
-                <button onClick={handleSave} className="btn-ghost text-xs">
-                  {saved ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Save className="w-3.5 h-3.5" />}
-                  {saved ? 'Saved' : 'Save'}
-                </button>
+                <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-lg transition-all ${saved ? 'text-green-600 bg-green-50' : 'text-gray-400'}`}>
+                  {saved ? <Check className="w-3.5 h-3.5" /> : <Loader2 className="w-3.5 h-3.5" />}
+                  {saved ? 'Saved to history' : 'Saving...'}
+                </span>
                 <button onClick={handleGenerate} className="btn-ghost text-xs">
                   <RefreshCw className="w-3.5 h-3.5" /> Regenerate
                 </button>
@@ -360,6 +374,22 @@ function ImageGenerator({ onSaved }: { onSaved: () => void }) {
     setImageUrl(res.url);
     setIsDemo(res.isDemo);
     setLoading(false);
+    // Auto-save to history.
+    try {
+      await saveImage({
+        prompt,
+        style,
+        mood,
+        quality,
+        aspect_ratio: size,
+        image_url: res.url,
+        is_demo: res.isDemo,
+      });
+      setSaved(true);
+      onSaved();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to save image to history.');
+    }
   };
 
   const handleCopyPrompt = async () => {
@@ -526,11 +556,18 @@ function ImageGenerator({ onSaved }: { onSaved: () => void }) {
         <div className="card p-5 h-full flex flex-col">
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-bold text-gray-900">Generated Image</h3>
-            {isDemo && imageUrl && (
-              <span className="text-[11px] font-semibold bg-amber-100 text-amber-700 px-2 py-1 rounded-full">
-                Demo Image Mode
-              </span>
-            )}
+            <div className="flex items-center gap-2">
+              {saved && imageUrl && (
+                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-green-600 bg-green-50 px-2 py-1 rounded-full">
+                  <Check className="w-3 h-3" /> Saved to history
+                </span>
+              )}
+              {isDemo && imageUrl && (
+                <span className="text-[11px] font-semibold bg-amber-100 text-amber-700 px-2 py-1 rounded-full">
+                  Demo Image Mode
+                </span>
+              )}
+            </div>
           </div>
 
           {loading ? (
@@ -551,10 +588,6 @@ function ImageGenerator({ onSaved }: { onSaved: () => void }) {
               <div className="mt-4 flex flex-wrap gap-2 justify-center">
                 <button onClick={handleGenerate} className="btn-secondary text-xs">
                   <RefreshCw className="w-3.5 h-3.5" /> Regenerate
-                </button>
-                <button onClick={handleSave} className="btn-secondary text-xs">
-                  {saved ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Save className="w-3.5 h-3.5" />}
-                  {saved ? 'Saved' : 'Save Image'}
                 </button>
                 <button onClick={handleCopyPrompt} className="btn-secondary text-xs">
                   {copied ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
