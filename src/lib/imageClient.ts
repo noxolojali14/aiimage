@@ -1,5 +1,4 @@
 import type { ImageOptions } from './types';
-import { generateDemoImageUrl } from './demo';
 import { supabase } from './supabase';
 
 export type GenerateImageResult = {
@@ -8,15 +7,37 @@ export type GenerateImageResult = {
 };
 
 /**
+ * Build a Pollinations image URL from a prompt and options.
+ * Pollinations generates an actual AI image from the text prompt,
+ * so "sunset over the ocean" returns a sunset image, not a random photo.
+ */
+function buildPollinationsUrl(prompt: string, options: ImageOptions): string {
+  const enhanced = `${prompt}, ${options.style.toLowerCase()}, ${options.mood.toLowerCase()} mood, high detail, professional`;
+  const encoded = encodeURIComponent(enhanced);
+
+  let width = 1024;
+  let height = 1024;
+  if (options.aspectRatio.includes('16:9')) {
+    width = 1280;
+    height = 720;
+  } else if (options.aspectRatio.includes('4:5')) {
+    width = 800;
+    height = 1000;
+  }
+
+  const seed = Math.floor(Math.random() * 1000000);
+  return `https://image.pollinations.ai/prompt/${encoded}?width=${width}&height=${height}&seed=${seed}&nologo=true&model=flux`;
+}
+
+/**
  * Reusable AI image generation function.
  *
  * If an image-generation API key is configured on the server (via the
  * `generate-image` edge function), the request is proxied securely through
  * that function so no API key is ever exposed to the browser.
  *
- * If no API is configured, the function falls back to a clearly-labelled
- * Demo Image Generation Mode that returns a placeholder image. Demo images
- * are never presented as real AI output.
+ * If no API is configured, falls back to Pollinations AI which generates
+ * real images from the prompt (free, no key required).
  */
 export async function generateAIImage(
   prompt: string,
@@ -61,9 +82,9 @@ export async function generateAIImage(
 
     throw new Error('No image URL returned');
   } catch {
-    // Fallback to demo mode if the edge function is not deployed or errors.
+    // Fallback: Pollinations AI generates real images from the prompt (no key needed).
     return {
-      url: generateDemoImageUrl(prompt, options.aspectRatio),
+      url: buildPollinationsUrl(prompt, options),
       isDemo: true,
     };
   }

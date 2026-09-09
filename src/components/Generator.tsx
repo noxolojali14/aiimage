@@ -8,7 +8,7 @@ import {
   IMAGE_QUALITIES,
 } from '@/lib/constants';
 import { buildPrompt, buildImagePrompt } from '@/lib/prompts';
-import { generateDemoContent } from '@/lib/demo';
+import { generateAIText } from '@/lib/textClient';
 import { generateAIImage } from '@/lib/imageClient';
 import { validatePromptType, formatMismatchMessage } from '@/lib/validation';
 import { saveContent, saveImage } from '@/lib/data';
@@ -149,23 +149,46 @@ function TextCodeGenerator({
     setSaved(false);
     setLoading(true);
     setResult('');
-    await new Promise((r) => setTimeout(r, 900));
-    const out = generateDemoContent(type, prompt, isCode ? language : undefined);
-    setResult(out);
+
+    // Step 1: Generate the content via AI.
+    let generatedText: string;
+    let isDemoResult = false;
+    try {
+      const res = await generateAIText({
+        type,
+        prompt,
+        systemPrompt: builtPrompt,
+        language: isCode ? language : undefined,
+      });
+      generatedText = res.text;
+      isDemoResult = res.isDemo;
+    } catch {
+      setLoading(false);
+      setError('Generation failed. Please try again.');
+      return;
+    }
+
+    // Step 2: Display the result immediately.
+    setResult(generatedText);
     setLoading(false);
-    // Auto-save to history.
+
+    // Step 3: Only save to history if generation succeeded.
     try {
       await saveContent({
         type,
         title: prompt.slice(0, 60) || (isCode ? language : type),
         prompt: builtPrompt,
-        result: out,
+        result: generatedText,
         language: isCode ? language : null,
       });
       setSaved(true);
       onSaved();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to save to history.');
+      // Result is displayed — history save failed but user can still use the content.
+      setError(
+        (e instanceof Error ? e.message : 'Failed to save to history.') +
+          ' Your content is still displayed above.'
+      );
     }
   };
 
@@ -288,10 +311,15 @@ function TextCodeGenerator({
                   {copied ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
                   {copied ? 'Copied' : 'Copy'}
                 </button>
-                <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-lg transition-all ${saved ? 'text-green-600 bg-green-50' : 'text-gray-400'}`}>
-                  {saved ? <Check className="w-3.5 h-3.5" /> : <Loader2 className="w-3.5 h-3.5" />}
-                  {saved ? 'Saved to history' : 'Saving...'}
-                </span>
+                {saved ? (
+                  <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-lg text-green-600 bg-green-50">
+                    <Check className="w-3.5 h-3.5" /> Saved to history
+                  </span>
+                ) : (
+                  <button onClick={handleSave} className="btn-ghost text-xs">
+                    <Save className="w-3.5 h-3.5" /> Save to history
+                  </button>
+                )}
                 <button onClick={handleGenerate} className="btn-ghost text-xs">
                   <RefreshCw className="w-3.5 h-3.5" /> Regenerate
                 </button>
@@ -365,16 +393,28 @@ function ImageGenerator({ onSaved }: { onSaved: () => void }) {
     setSaved(false);
     setLoading(true);
     setImageUrl(null);
-    const res = await generateAIImage(prompt, {
-      style,
-      mood,
-      quality,
-      aspectRatio: size,
-    });
+
+    // Step 1: Generate the image.
+    let res;
+    try {
+      res = await generateAIImage(prompt, {
+        style,
+        mood,
+        quality,
+        aspectRatio: size,
+      });
+    } catch {
+      setLoading(false);
+      setError('Image generation failed. Please try again.');
+      return;
+    }
+
+    // Step 2: Display the image immediately.
     setImageUrl(res.url);
     setIsDemo(res.isDemo);
     setLoading(false);
-    // Auto-save to history.
+
+    // Step 3: Save to history only after successful generation.
     try {
       await saveImage({
         prompt,
@@ -388,7 +428,10 @@ function ImageGenerator({ onSaved }: { onSaved: () => void }) {
       setSaved(true);
       onSaved();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to save image to history.');
+      setError(
+        (e instanceof Error ? e.message : 'Failed to save image to history.') +
+          ' Your image is still displayed above.'
+      );
     }
   };
 
@@ -556,18 +599,11 @@ function ImageGenerator({ onSaved }: { onSaved: () => void }) {
         <div className="card p-5 h-full flex flex-col">
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-bold text-gray-900">Generated Image</h3>
-            <div className="flex items-center gap-2">
-              {saved && imageUrl && (
-                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-green-600 bg-green-50 px-2 py-1 rounded-full">
-                  <Check className="w-3 h-3" /> Saved to history
-                </span>
-              )}
-              {isDemo && imageUrl && (
-                <span className="text-[11px] font-semibold bg-amber-100 text-amber-700 px-2 py-1 rounded-full">
-                  Demo Image Mode
-                </span>
-              )}
-            </div>
+            {isDemo && imageUrl && (
+              <span className="text-[11px] font-semibold bg-amber-100 text-amber-700 px-2 py-1 rounded-full">
+                AI Image Mode
+              </span>
+            )}
           </div>
 
           {loading ? (
@@ -589,6 +625,15 @@ function ImageGenerator({ onSaved }: { onSaved: () => void }) {
                 <button onClick={handleGenerate} className="btn-secondary text-xs">
                   <RefreshCw className="w-3.5 h-3.5" /> Regenerate
                 </button>
+                {saved ? (
+                  <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg text-green-600 bg-green-50">
+                    <Check className="w-3.5 h-3.5" /> Saved to history
+                  </span>
+                ) : (
+                  <button onClick={handleSave} className="btn-secondary text-xs">
+                    <Save className="w-3.5 h-3.5" /> Save to history
+                  </button>
+                )}
                 <button onClick={handleCopyPrompt} className="btn-secondary text-xs">
                   {copied ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
                   {copied ? 'Copied' : 'Copy Prompt'}
